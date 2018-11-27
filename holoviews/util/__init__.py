@@ -545,6 +545,12 @@ class Dynamic(param.ParameterizedFunction):
         added to the list.
         """
         streams = []
+
+        # If callback is a parameterized method and watch is disabled add as stream
+        param_watch_support = util.param_version >= '1.8.0'
+        if util.is_param_method(self.p.operation) and param_watch_support:
+            streams.append(self.p.operation)
+
         for stream in self.p.streams:
             if inspect.isclass(stream) and issubclass(stream, Stream):
                 stream = stream()
