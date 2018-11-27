@@ -861,6 +861,8 @@ class CDSCallback(Callback):
             stream.update(data=data)
 
     def _process_msg(self, msg):
+        if 'data' not in msg:
+            return {}
         msg['data'] = dict(msg['data'])
         for col, values in msg['data'].items():
             if isinstance(values, dict):
@@ -927,7 +929,7 @@ class PolyDrawCallback(CDSCallback):
             if bokeh_version >= '1.0.0':
                 kwargs['num_objects'] = stream.num_objects
             else:
-                param.main.warning('Specifying num_objects to PointDraw stream '
+                param.main.warning('Specifying num_objects to PolyDraw stream '
                                    'only supported for bokeh versions >=1.0.0.')
         if stream.show_vertices:
             if bokeh_version >= '1.0.0':
@@ -1020,7 +1022,8 @@ class BoxEditCallback(CDSCallback):
         plot.handles['rect_source'] = rect_source
         box_tool = BoxEditTool(renderers=[r1], **kwargs)
         plot.state.tools.append(box_tool)
-        self.plot.state.renderers.remove(plot.handles['glyph_renderer'])
+        if plot.handles['glyph_renderer'] in self.plot.state.renderers:
+            self.plot.state.renderers.remove(plot.handles['glyph_renderer'])
         super(CDSCallback, self).initialize()
         data = self._process_msg({'data': data})['data']
         for stream in self.streams:
@@ -1028,7 +1031,10 @@ class BoxEditCallback(CDSCallback):
 
 
     def _process_msg(self, msg):
-        data = super(BoxEditCallback, self)._process_msg(msg)['data']
+        data = super(BoxEditCallback, self)._process_msg(msg)
+        if 'data' not in data:
+            return {}
+        data = data['data']
         x0s, x1s, y0s, y1s = [], [], [], []
         for x, y, w, h in zip(data['x'], data['y'], data['width'], data['height']):
             x0s.append(x-w/2.)
